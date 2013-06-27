@@ -72,6 +72,9 @@ module Airbrake
     # See Configuration#ignore_by_filters
     attr_reader :ignore_by_filters
 
+    # See Configuration#warn
+    attr_reader :warn
+
     # The name of the notifier library sending this notice, such as "Airbrake Notifier"
     attr_reader :notifier_name
 
@@ -93,7 +96,7 @@ module Airbrake
     attr_writer :exception, :api_key, :backtrace, :error_class, :error_message,
       :backtrace_filters, :parameters, :params_filters,
       :session_data, :project_root, :url, :ignore,
-      :ignore_by_filters, :notifier_name, :notifier_url, :notifier_version,
+      :ignore_by_filters, :warn, :notifier_name, :notifier_url, :notifier_version,
       :component, :action, :cgi_data, :environment_name, :hostname, :user
 
     # Arguments given in the initializer
@@ -114,6 +117,7 @@ module Airbrake
 
       self.ignore              = args[:ignore]              || []
       self.ignore_by_filters   = args[:ignore_by_filters]   || []
+      self.warn                = args[:warn]                || []
       self.backtrace_filters   = args[:backtrace_filters]   || []
       self.params_filters      = args[:params_filters]      || []
       self.parameters          = args[:parameters] ||
@@ -133,6 +137,8 @@ module Airbrake
 
       self.hostname        = local_hostname
       self.user = args[:user] || {}
+
+      self.environment_name = self.environment_name + ' Warnings'
 
       also_use_rack_params_filters
       find_session_data
@@ -250,6 +256,11 @@ module Airbrake
     def ignore?
       ignored_class_names.include?(error_class) ||
         ignore_by_filters.any? {|filter| filter.call(self) }
+    end
+
+    # Determines if this notice should be part of the warn environment
+    def warn?
+      warned_class_names.include?(error_class)
     end
 
     # Allows properties to be accessed using a hash-like syntax
@@ -379,6 +390,17 @@ module Airbrake
     # TODO: move this into Configuration or another class
     def ignored_class_names
       ignore.collect do |string_or_class|
+        if string_or_class.respond_to?(:name)
+          string_or_class.name
+        else
+          string_or_class
+        end
+      end
+    end
+
+    # Converts the mixed class instances and class names into just names
+    def warned_class_names
+      warn.collect do |string_or_class|
         if string_or_class.respond_to?(:name)
           string_or_class.name
         else

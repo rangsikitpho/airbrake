@@ -5,7 +5,7 @@ module Airbrake
     OPTIONS = [:api_key, :js_api_key, :backtrace_filters, :development_environments,
         :development_lookup, :environment_name, :host,
         :http_open_timeout, :http_read_timeout, :ignore, :ignore_by_filters,
-        :ignore_user_agent, :notifier_name, :notifier_url, :notifier_version,
+        :ignore_user_agent, :warn, :notifier_name, :notifier_url, :notifier_version,
         :params_filters, :project_root, :port, :protocol, :proxy_host,
         :proxy_pass, :proxy_port, :proxy_user, :secure, :use_system_ssl_cert_chain,
         :framework, :user_information, :rescue_rake_exceptions, :rake_environment_filters,
@@ -67,6 +67,9 @@ module Airbrake
 
     # A list of exception classes to ignore during server requests. The array can be appended to.
     attr_reader :ignore
+
+    # A list of exception classes to put in warning environment. The array can be appended to.
+    attr_reader :warn
 
     # A list of exception classes to ignore during Rake tasks. The array can be appended to.
     attr_reader :ignore_rake
@@ -169,6 +172,7 @@ module Airbrake
       @ignore                   = IGNORE_DEFAULT.dup
       @ignore_rake              = []  # Rake tasks don't ignore any exception classes by default
       @ignore_user_agent        = []
+      @warn                     = []
       @development_environments = %w(development test cucumber)
       @development_lookup       = true
       @notifier_name            = 'Airbrake Notifier'
@@ -229,6 +233,13 @@ module Airbrake
     # @param [Array<String>] A list of user agents to ignore
     def ignore_user_agent_only=(names)
       @ignore_user_agent = [names].flatten
+    end
+
+    # Overrides the list of default ignored errors.
+    #
+    # @param [Array<Exception>] names A list of exceptions to ignore.
+    def warn_only=(names)
+      @warn = [names].flatten
     end
 
     # Allows config options to be read like a hash
