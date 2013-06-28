@@ -138,7 +138,7 @@ module Airbrake
       self.hostname        = local_hostname
       self.user = args[:user] || {}
 
-      self.environment_name = self.environment_name + ' Warnings'
+      self.environment_name = self.environment_name + ' warnings' if warn?
 
       also_use_rack_params_filters
       find_session_data
